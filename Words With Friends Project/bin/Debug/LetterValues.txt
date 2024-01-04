@@ -1,0 +1,35 @@
+a = 1
+b = 3
+c = 3
+d = 2
+e = 1 
+f = 4
+g = 2
+h = 4
+i = 1
+j = 6
+k = 5
+l = 1
+m = 3
+n = 1
+o = 1
+p = 3
+q = 10   
+r = 2
+s = 1
+t = 2
+u = 1
+v = 6 
+w = 4
+x = 8
+y = 9
+z = 10
+----------Values Mains Above :D
+!_ = -3,5
+
+
+!v is usually worth 4.
+!j is usually worth 8.
+
+multi_placement[0] = rreeyery
+Lmultiplier = "";

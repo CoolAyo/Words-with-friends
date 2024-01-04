@@ -1,0 +1,463 @@
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel;
+using System.Data;
+using System.Drawing;
+using System.IO;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
+using System.Windows.Forms;
+
+namespace Words_With_Friends_Project
+{
+    public partial class Form1 : Form
+    {
+        static int[] plrpoints = new int[4];
+        static int plrturn = 1;
+        static int plrturnmax = 0;
+        static bool gameStarted = false;
+        static string errmsg = "...";
+        static int letterSkips = 0;
+        static Random RPick = new Random();
+        static char[] PlayerChrs = new char[7] { '!', '!', '!', '!', '!', '!', '!' };
+        static bool gameStick = false;
+        static string[] eventmessage = new string[2];
+
+
+
+        public Form1()
+        {
+            InitializeComponent();
+        }
+
+        private void TundeError()
+        {
+            string errmessage = "AYOTUND";
+
+            MessageBox.Show("Did you hack? Something is not right here...");
+            gameStarted = false;
+            UserLetter1.Text = char.ToString(errmessage[0]);
+            UserLetter2.Text = char.ToString(errmessage[1]);
+            UserLetter3.Text = char.ToString(errmessage[2]);
+            UserLetter4.Text = char.ToString(errmessage[3]);
+            UserLetter5.Text = char.ToString(errmessage[4]);
+            UserLetter6.Text = char.ToString(errmessage[5]);
+            UserLetter7.Text = char.ToString(errmessage[6]);
+
+        }
+
+        private void WordLoad()
+        {
+            PlayerChrs[0] = '!';
+            PlayerChrs[1] = '!';
+            PlayerChrs[2] = '!';
+            PlayerChrs[3] = '!';
+            PlayerChrs[4] = '!';
+            PlayerChrs[5] = '!';
+            PlayerChrs[6] = '!';
+            char[] vowelRNG = new char[] { 'A', 'A', 'E', 'E', 'E', 'I', 'O', 'U' };
+            char[] consonantMainsRNG = new char[] { 'B', 'B', 'C', 'D', 'F', 'G', 'H', 'K', 'L', 'M', 'M', 'N', 'P', 'R', 'S', 'T', 'W' };
+            char[] consonantsRareRNG = new char[] { 'J', 'J', 'Q', 'V', 'X', 'Y', 'Z' };
+            int Placement = 0;
+            int successfulplace = RPick.Next(2, 3); // Always at least two vowels (2 or 3 vowels)
+            while (successfulplace > 0)
+            {
+                Placement = RPick.Next(0, PlayerChrs.Length);
+                if (PlayerChrs[Placement] == '!')
+                {
+                    PlayerChrs[Placement] = vowelRNG[RPick.Next(0, vowelRNG.Length)];
+                    successfulplace = successfulplace - 1;
+                }
+
+            }
+            successfulplace = RPick.Next(0,5); // 1/6 chance of an extra vowel.
+            if (successfulplace == 1) 
+            {
+                while (successfulplace > 0)
+                {
+                    Placement = RPick.Next(0, PlayerChrs.Length);
+                    if (PlayerChrs[Placement] == '!')
+                    {
+                        PlayerChrs[Placement] = vowelRNG[RPick.Next(0, vowelRNG.Length)];
+                        successfulplace = successfulplace - 1;
+                    }
+
+                }
+            }
+
+            successfulplace = RPick.Next(0, 2); // Rare letters will appear in  0-2 boxes
+            while (successfulplace > 0)
+            {
+                Placement = RPick.Next(0, PlayerChrs.Length);
+                if (PlayerChrs[Placement] == '!')
+                {
+                    PlayerChrs[Placement] = consonantsRareRNG[RPick.Next(0, consonantsRareRNG.Length)];
+                    successfulplace = successfulplace - 1;
+                }
+
+            }
+
+            for (int i = 0; i < PlayerChrs.Length; i++)
+            {
+                if (PlayerChrs[i] == '!')
+                {
+                    PlayerChrs[i] = consonantMainsRNG[RPick.Next(0, consonantMainsRNG.Length)];
+                }
+            }
+
+            UserLetter1.Text = char.ToString(PlayerChrs[0]);
+            UserLetter2.Text = char.ToString(PlayerChrs[1]);
+            UserLetter3.Text = char.ToString(PlayerChrs[2]);
+            UserLetter4.Text = char.ToString(PlayerChrs[3]);
+            UserLetter5.Text = char.ToString(PlayerChrs[4]);
+            UserLetter6.Text = char.ToString(PlayerChrs[5]);
+            UserLetter7.Text = char.ToString(PlayerChrs[6]);
+            // Chance of multiplied letter value and word. (Do this after word identification works)
+
+
+
+        }
+
+        private void PlayerSystem(string requesttype,int playerselection)
+        {
+            if (requesttype == "PlayerSelected")
+            {
+
+                if (playerselection == 1)
+                {
+                    P1Pts.ForeColor = Color.RoyalBlue;
+                    P2Pts.ForeColor = Color.DarkRed;
+                    P3Pts.ForeColor = Color.DarkRed;
+                    P4Pts.ForeColor = Color.DarkRed;
+                }
+                else if (playerselection == 2)
+                {
+                    P1Pts.ForeColor = Color.DarkRed;
+                    P2Pts.ForeColor = Color.RoyalBlue;
+                    P3Pts.ForeColor = Color.DarkRed;
+                    P4Pts.ForeColor = Color.DarkRed;
+                }
+                else if (playerselection == 3)
+                {
+                    P1Pts.ForeColor = Color.DarkRed;
+                    P2Pts.ForeColor = Color.DarkRed;
+                    P3Pts.ForeColor = Color.RoyalBlue;
+                    P4Pts.ForeColor = Color.DarkRed;
+                }
+                else if (playerselection == 4)
+                {
+                    P1Pts.ForeColor = Color.DarkRed;
+                    P2Pts.ForeColor = Color.DarkRed;
+                    P3Pts.ForeColor = Color.DarkRed;
+                    P4Pts.ForeColor = Color.RoyalBlue;
+
+                }
+
+            }
+            else if (requesttype == "LetterReset")
+            {
+                if (letterSkips < 3)
+                {
+
+                    letterSkips = letterSkips + 1;
+                    if (letterSkips > 1 && letterSkips < 3)
+                    {
+                        plrpoints[playerselection - 1] -= 2;
+                    }
+
+                    WordLoad();
+                }
+                else
+                {
+                    // Change button appearance when disabling button
+                }
+            }
+        }
+
+        async private void EventDisplayer(string[] EventTxt,int timefor)
+        {
+            if (timefor > 0)
+            {
+                gameStick = true;
+                EventLabel.Text = EventTxt[0];
+                await Task.Delay(timefor);
+                EventLabel.Text = EventTxt[1];
+                gameStick = false;
+            }
+            else
+            {
+                EventLabel.Text = EventTxt[0];
+            }
+
+        }
+
+        async private void Form1_Load(object sender, EventArgs e)
+        {
+            UserLetter1.Text = "";
+            UserLetter1.BackColor = Color.FromArgb(162, 163, 165);
+            UserLetter2.Text = "";
+            UserLetter2.BackColor = Color.FromArgb(162, 163, 165);
+            UserLetter3.Text = "";
+            UserLetter3.BackColor = Color.FromArgb(162, 163, 165);
+            UserLetter3.Text = "";
+            UserLetter3.BackColor = Color.FromArgb(162, 163, 165);
+            UserLetter4.Text = "";
+            UserLetter4.BackColor = Color.FromArgb(162, 163, 165);
+            UserLetter5.Text = "";
+            UserLetter5.BackColor = Color.FromArgb(162, 163, 165);
+            UserLetter6.Text = "";
+            UserLetter6.BackColor = Color.FromArgb(162, 163, 165);
+            UserLetter7.Text = "";
+            UserLetter7.BackColor = Color.FromArgb(162, 163, 165);
+            P1Pts.Text = " ";
+            P1Pts.BackColor = Color.FromArgb(162, 163, 165);
+            P2Pts.Text = "Two Players";
+            P3Pts.Text = "Three Players";
+            P4Pts.Text = "Four Players";
+            SpecialEventTitle.Visible = false;
+            EventLabel.Text = "Select how many players you want in the top right corner.";
+            while (gameStarted == false)
+            {
+                await Task.Delay(500);
+            }
+            //Startup
+            gameStarted = false;
+            UserLetter1.BackColor = Color.FromArgb(255, 128, 0);
+            UserLetter1.Text = "A";
+            await Task.Delay(500);
+            UserLetter2.BackColor = Color.FromArgb(255, 128, 0);
+            UserLetter2.Text = "Y";
+            await Task.Delay(500);
+            UserLetter3.BackColor = Color.FromArgb(255, 128, 0);
+            UserLetter3.Text = "O";
+            await Task.Delay(500);
+            UserLetter4.BackColor = Color.FromArgb(255, 128, 0);
+            UserLetter4.Text = "M";
+            await Task.Delay(500);
+            UserLetter5.BackColor = Color.FromArgb(255, 128, 0);
+            UserLetter5.Text = "I";
+            await Task.Delay(500);
+            UserLetter6.BackColor = Color.FromArgb(255, 128, 0);
+            UserLetter6.Text = "D";
+            await Task.Delay(500);
+            UserLetter7.BackColor = Color.FromArgb(255, 128, 0);
+            UserLetter7.Text = "E";
+            await Task.Delay(500);
+
+            ChangeButton.Text = "New Letters";
+            await Task.Delay(500);
+            ClearButton.Text = "Clear";
+            await Task.Delay(500);
+            MasterButton.Text = "Enter";
+            await Task.Delay(600);
+            UserLetter1.Text = "";
+            UserLetter2.Text = "";
+            UserLetter3.Text = "";
+            UserLetter4.Text = "";
+            UserLetter5.Text = "";
+            UserLetter6.Text = "";
+            UserLetter7.Text = "";
+            await Task.Delay(600);
+            UserLetter1.Text = "A";
+            UserLetter2.Text = "Y";
+            UserLetter3.Text = "O";
+            UserLetter4.Text = "M";
+            UserLetter5.Text = "I";
+            UserLetter6.Text = "D";
+            UserLetter7.Text = "E";
+            await Task.Delay(600);
+            UserLetter1.Text = "";
+            UserLetter2.Text = "";
+            UserLetter3.Text = "";
+            UserLetter4.Text = "";
+            UserLetter5.Text = "";
+            UserLetter6.Text = "";
+            UserLetter7.Text = "";
+            await Task.Delay(600);
+            UserLetter1.Text = "A";
+            UserLetter2.Text = "Y";
+            UserLetter3.Text = "O";
+            UserLetter4.Text = "M";
+            UserLetter5.Text = "I";
+            UserLetter6.Text = "D";
+            UserLetter7.Text = "E";
+            await Task.Delay(600);
+            UserLetter1.Text = "";
+            UserLetter2.Text = "";
+            UserLetter3.Text = "";
+            UserLetter4.Text = "";
+            UserLetter5.Text = "";
+            UserLetter6.Text = "";
+            UserLetter7.Text = "";
+            await Task.Delay(600);
+            if (plrturnmax < 1 || plrturnmax > 4)
+            {
+                TundeError();
+
+            }
+            //End Of startup
+            gameStarted = true;
+            while (gameStarted == true) // Game is now running
+            {
+
+                
+
+                PlayerSystem("PlayerSelected", plrturn);
+
+                WordLoad();
+
+
+                await Task.Delay(100000000);
+
+
+            }
+
+
+
+        }
+
+        private void P2Pts_Click(object sender, EventArgs e)
+        {
+            if (gameStarted == false)
+            {
+                SpecialEventTitle.Visible = true;
+                P1Pts.BackColor = Color.White;
+                P1Pts.Text = "Player 1: 0";
+                P2Pts.Text = "Player 2: 0";
+                P3Pts.BackColor = Color.FromArgb(162, 163, 165);
+                P3Pts.Text = " ";
+                P4Pts.BackColor = Color.FromArgb(162, 163, 165);
+                P4Pts.Text = " ";
+                plrturnmax = 2;
+                gameStarted = true;
+            }
+
+        }
+
+        private void P3Pts_Click(object sender, EventArgs e)
+        {
+            if (gameStarted == false)
+            {
+                SpecialEventTitle.Visible = true;
+                P1Pts.BackColor = Color.White;
+                P1Pts.Text = "Player 1: 0";
+                P2Pts.Text = "Player 2: 0";
+                P3Pts.Text = "Player 3: 0";
+                P4Pts.BackColor = Color.FromArgb(162, 163, 165);
+                P4Pts.Text = " ";
+                plrturnmax = 3;
+                gameStarted = true;
+            }
+
+        }
+
+        private void P4Pts_Click(object sender, EventArgs e)
+        {
+            if (gameStarted == false)
+            {
+                SpecialEventTitle.Visible = true;
+                P1Pts.BackColor = Color.White;
+                P1Pts.Text = "Player 1: 0";
+                P2Pts.Text = "Player 2: 0";
+                P3Pts.Text = "Player 3: 0";
+                P4Pts.Text = "Player 4: 0";
+                plrturnmax = 4;
+                gameStarted = true;
+            }
+
+        }
+
+        private void UselessButton_Click(object sender, EventArgs e)
+        {
+            // Make a table for useless button random message
+            MessageBox.Show("Are you stupid child?\nwhy did you click here");
+            // Double colour 65, 105, 225
+            // Triple colour 255,165,0
+            //⎵ 206, 226 / position
+
+            // button colour: 255, 128, 0
+            // plr colour: DarkRed
+
+            // Multiplier StarterLocation X = 197
+
+            // Things to do: Player Turn (this means things like penalties), Word Identification
+        }
+
+        private void UserLetter1_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void UserLetter2_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void UserLetter3_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void UserLetter4_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void UserLetter5_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void UserLetter6_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void UserLetter7_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void ChangeButton_Click(object sender, EventArgs e)
+        {
+            if (gameStarted == true)
+            {
+                PlayerSystem("LetterReset", plrturn);
+            }
+        }
+
+        private void ClearButton_Click(object sender, EventArgs e)
+        {
+            // Re-enable all user letters and clear out word.
+        }
+
+        async private void MasterButton_Click(object sender, EventArgs e)
+        {
+            if (gameStarted == true && gameStick == false)
+            {
+                // Check if word exists
+ 
+                if (plrturn == plrturnmax)
+                {
+                    plrturn = 1;
+                }
+                else
+                {
+                    plrturn += 1;
+                }
+                // Make event box display to whoevers turn it is.
+                letterSkips = 0;
+                PlayerSystem("PlayerSelected", plrturn);
+                WordLoad();
+                //work here boi
+                eventmessage[0] = "It is now Player " + plrturn + "'s turn";
+                eventmessage[1] = " ";
+                EventDisplayer(eventmessage,750);
+                await Task.Delay(750);
+                gameStick = false;
+            }
+
+        }
+    }
+}
